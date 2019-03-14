@@ -9,6 +9,8 @@ def main(args):
 def solveSudoku(path):
     cnf = parseToFormula(path)
     sudoku(cnf)
+
+    print("\n")
     print("Amount of CNF:" + str(len(cnf)))
 
     # SAT 
@@ -20,16 +22,24 @@ def solveSudoku(path):
     else:
         print("Satisfiable")
 
-    solution = set(satResult) # множество
+    print("\n")
 
-    file = open(path + "_result.txt","w+") # создание файла
+    solution = set(satResult) # множество
+    arr = []
 
     for i in range(0, 9):
+        arr.append([fromVar(i,j,solution) for j in range(0,9)])    
+    
+    result = ""
+    for i in range(0, 9):
         for j in range(0, 9):
-            file.write("%d", fromVar(i,j,solution))
-        file.write("\n")
+            result += str(arr[i][j])
+        result += "\n"
+    
+    print(result)
 
-    print(file.read())
+    file = open(path + "_result.txt","w+") # создание файла
+    file.write(result)
     file.close();
 
 # закодировать
@@ -70,10 +80,7 @@ def sudoku(cnf):
     # хотя бы одно число в каждой клетке
     for i in range(0,9):
         for j in range(0,9):
-            toAdd = []
-            for k in range(1,10):
-                toAdd.append(toVar(i,j,k))
-            cnf.append(toAdd)
+            cnf.append([toVar(i,j,k) for k in range(1,10)])
     # в строке все числа
     for i in range(0,9):
         for k in range(1,10):
@@ -88,7 +95,7 @@ def sudoku(cnf):
                 for t in range(0,9):
                     if t != i:
                         cnf.append([-toVar(i,j,k), -toVar(t,j,k)])
-    # в блоке все числа
+    # в блоке одно число
     for bRow in range(0,3):
         for bCol in range(0,3):
             # в блоке
@@ -99,8 +106,19 @@ def sudoku(cnf):
                             if t != k:
                                 gI = bRow * 3 + i
                                 gJ = bCol * 3 + j
-                                cnf.append([-toVar(gI,j,k), -toVar(gJ,j,t)])
-
+                                cnf.append([-toVar(gI,gJ,k), -toVar(gI,gJ,t)])
+    # в блоке все числа
+    for k in range(1,10):
+        for bRow in range(0,3):
+            for bCol in range(0,3):
+                # в блоке
+                toAdd = []
+                for i in range(0,3):
+                    for j in range(0,3):
+                        gI = bRow * 3 + i
+                        gJ = bCol * 3 + j
+                        toAdd.append(toVar(gI,gJ,k))
+                cnf.append(toAdd)
 
 if __name__ == '__main__':
     path = raw_input("Enter path: ")
